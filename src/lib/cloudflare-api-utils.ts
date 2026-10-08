@@ -64,5 +64,5 @@ export function getCloudflareAuthHint(errors: CfApiError[], path = "") {
 }
 
 export function getEmailWorkerName(): string {
-	return "mailflare";
+	return "mailflare-tekkan";
 }
