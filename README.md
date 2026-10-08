@@ -1,4 +1,4 @@
-<img src="/public/icon-96.png" alt="Mailflare" width="72" />
+<img src="/public/icon-96.png" alt="Mailflare" width="72" /> 
 
 # Mailflare
 
