@@ -36,6 +36,14 @@ export async function updateMailboxSettings(
 	return json.mailbox;
 }
 
+export async function convertToSharedInbox(id: string): Promise<void> {
+	const res = await authFetch(`/api/mailboxes/${id}/convert-to-shared`, { method: "POST" });
+	const json = (await res.json()) as { error?: string };
+	if (!res.ok) throw new Error(json.error ?? "Failed to convert mailbox to a shared inbox");
+
+	clearMailboxesCache();
+}
+
 export async function fetchSharedInboxAccess(id: string): Promise<SharedInboxAccessResponse> {
 	const res = await authFetch(`/api/mailboxes/${id}/access`);
 	const json = (await res.json()) as SharedInboxAccessResponse;

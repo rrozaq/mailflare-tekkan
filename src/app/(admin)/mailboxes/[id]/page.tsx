@@ -21,6 +21,7 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createMailboxAlias,
+  convertToSharedInbox,
   deleteMailbox,
   deleteMailboxAlias,
   fetchMailbox,
@@ -111,6 +112,13 @@ export default function MailboxSettingsPage() {
   const removeMember = useMutation({
     mutationFn: (userId: string) => revokeSharedInboxAccess(mailboxId, userId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mailbox", mailboxId, "access"] }),
+  });
+  const convertToShared = useMutation({
+    mutationFn: () => convertToSharedInbox(mailboxId),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["mailbox", mailboxId] });
+      await qc.invalidateQueries({ queryKey: ["mailboxes"] });
+    },
   });
 
   const address = mailbox.data ? getMailboxAddress(mailbox.data) : "";
@@ -205,6 +213,33 @@ export default function MailboxSettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {mailbox.data?.type === "personal" && (
+        <Card className="rounded-3xl border-0 bg-white p-6">
+          <CardHeader className="py-0">
+            <CardTitle>{t("mailbox.convertToShared")}</CardTitle>
+            <CardDescription>{t("mailbox.convertToSharedDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-5">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={convertToShared.isPending}
+              onClick={() => {
+                if (!window.confirm(t("mailbox.convertToSharedConfirm", { address }))) return;
+                convertToShared.mutate();
+              }}
+            >
+              {convertToShared.isPending ? t("mailbox.convertingToShared") : t("mailbox.convertToShared")}
+            </Button>
+            {convertToShared.isError && (
+              <p className="mt-3 text-sm text-red-600">
+                {convertToShared.error instanceof Error ? convertToShared.error.message : t("mailbox.convertToSharedFailed")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="rounded-3xl border-0 bg-white p-6">
         <CardHeader className="py-0">
