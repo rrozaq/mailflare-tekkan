@@ -41,12 +41,13 @@ export default function DashboardLayout({
   const requirePrimary = primaryOnlyPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
+	const allowMailboxManagers = pathname === "/mailboxes" || pathname.startsWith("/mailboxes/");
 
   const mobileTitleKey = adminPageTitles[pathname];
   const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
 
   return (
-    <AuthGuard requireMailbox requireRole="admin" requirePrimary={requirePrimary}>
+    <AuthGuard requireMailbox requireRole="admin" allowMailboxManagers={allowMailboxManagers} requirePrimary={requirePrimary}>
       <SidebarProvider expandedWidth={256} mobileOverlay>
       <MailboxProvider>
         <ComposeProvider>

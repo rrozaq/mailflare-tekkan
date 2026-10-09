@@ -7,7 +7,7 @@ import type { AuthGuardProps } from "./auth-guard-types";
 import { LoadingTransition } from "@/components/loading-transition";
 import { saveUserTimeZonePreference } from "@/lib/time/client";
 
-export function AuthGuard({ children, mode = "protected", requireMailbox, requireRole, requirePrimary, allowAuthenticated }: AuthGuardProps) {
+export function AuthGuard({ children, mode = "protected", requireMailbox, requireRole, allowMailboxManagers, requirePrimary, allowAuthenticated }: AuthGuardProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const [authorized, setAuthorized] = useState(mode === "public");
@@ -35,7 +35,7 @@ export function AuthGuard({ children, mode = "protected", requireMailbox, requir
 					return;
 				}
 
-				const data = (await response.json()) as { hasMailboxes?: boolean; isSetup?: boolean; user?: { id?: string; role?: string; isPrimaryAdmin?: boolean; timeZone?: string | null } };
+				const data = (await response.json()) as { hasMailboxes?: boolean; isSetup?: boolean; user?: { id?: string; role?: string; isPrimaryAdmin?: boolean; canManageMailboxes?: boolean; timeZone?: string | null } };
 				if (data.user?.id) saveUserTimeZonePreference(data.user.id, data.user.timeZone ?? null);
 				if (mode === "public") {
 					if (!allowAuthenticated) router.replace("/inbox");
@@ -52,7 +52,8 @@ export function AuthGuard({ children, mode = "protected", requireMailbox, requir
 					return;
 				}
 
-				if (requireRole && data.user?.role !== requireRole) {
+				const isAllowedMailboxManager = allowMailboxManagers && data.user?.canManageMailboxes === true;
+				if (requireRole && data.user?.role !== requireRole && !isAllowedMailboxManager) {
 					router.replace("/inbox");
 					return;
 				}
@@ -73,7 +74,7 @@ export function AuthGuard({ children, mode = "protected", requireMailbox, requir
 		return () => {
 			cancelled = true;
 		};
-	}, [mode, pathname, requireMailbox, requireRole, requirePrimary, allowAuthenticated, router]);
+	}, [mode, pathname, requireMailbox, requireRole, allowMailboxManagers, requirePrimary, allowAuthenticated, router]);
 
 	useEffect(() => {
 		const refreshTimeZone = (event: StorageEvent) => {

@@ -5,6 +5,7 @@ import { AtSign, Save, Trash2, UserPlus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,7 @@ export default function MailboxSettingsPage() {
   const params = useParams<{ id: string }>();
   const mailboxId = params.id;
   const qc = useQueryClient();
+	const currentUser = useCurrentUser();
   const [displayName, setDisplayName] = useState("");
   const [useAllDomains, setUseAllDomains] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -214,7 +216,7 @@ export default function MailboxSettingsPage() {
         </CardContent>
       </Card>
 
-      {mailbox.data?.type === "personal" && (
+      {mailbox.data?.type === "personal" && currentUser?.role === "admin" && (
         <Card className="rounded-3xl border-0 bg-white p-6">
           <CardHeader className="py-0">
             <CardTitle>{t("mailbox.convertToShared")}</CardTitle>
