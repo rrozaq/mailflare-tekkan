@@ -43,18 +43,16 @@ export async function getLicenseStatus(env: CloudflareEnv): Promise<LicenseStatu
 }
 
 export async function getLicenseEntitlements(env: CloudflareEnv): Promise<LicenseEntitlements> {
-	try {
-		const status = await getLicenseStatus(env);
-		// TODO: confirm Paymug's exact feature identifiers when they are documented; plan is authoritative meanwhile.
-		return {
-			plan: status.plan,
-			canCustomizeBranding: status.active && (status.plan === "pro" || status.plan === "team"),
-			canManageAccounts: status.active && status.plan === "team",
-			canForwardEmail: status.active && (status.plan === "pro" || status.plan === "team"),
-		};
-	} catch {
-		return { plan: "community", canCustomizeBranding: false, canManageAccounts: false, canForwardEmail: false };
-	}
+	// This installation ships every feature to every administrator. Keep the
+	// entitlement boundary in one place so existing feature checks remain valid
+	// without requiring an external licensing service or a stored license key.
+	void env;
+	return {
+		plan: "community",
+		canCustomizeBranding: true,
+		canManageAccounts: true,
+		canForwardEmail: true,
+	};
 }
 
 async function updateLicenseFromPaymug(
