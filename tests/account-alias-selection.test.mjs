@@ -139,13 +139,13 @@ for (const kind of ["dashboard", "api"]) {
 	});
 }
 
-test("omitted settings preserve API compatibility; opting in includes future domains", async (t) => {
+test("omitted settings keep a new account on its primary domain; opting in includes future domains", async (t) => {
 	const f = await fixture(t);
 	assert.equal((await f.post("api")).status, 201);
-	assert.equal(f.mailbox().useAllDomains, true);
-	assert.deepEqual(await getMailboxDomainAddresses(f.db, f.mailbox()), ["sam@one.test", "sam@two.test"]);
+	assert.equal(f.mailbox().useAllDomains, false);
+	assert.deepEqual(await getMailboxDomainAddresses(f.db, f.mailbox()), ["sam@one.test"]);
 	f.database.db.exec("INSERT INTO domains (id, user_id, hostname, zone_id, status, created_at) VALUES ('later', 'admin', 'later.test', 'manual', 'active', 1)");
-	assert.equal((await resolveInboundAddress(f.db, "sam@later.test")).mailbox.mailboxId, f.mailbox().id);
+	assert.equal(await resolveInboundAddress(f.db, "sam@later.test"), null);
 	assert.equal((await f.post("dashboard", { username: "jane", useAllDomains: true, aliases: [{ domainId: "two", localPart: "billing" }] })).status, 201);
 	const address = await resolveInboundAddress(f.db, "billing@two.test");
 	assert.equal(address.mailbox.localPart, "jane");

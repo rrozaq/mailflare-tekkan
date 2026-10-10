@@ -38,12 +38,13 @@ export async function ensurePersonalMailbox(env: CloudflareEnv, db: AppDatabase,
 			localPart,
 			displayName: user.name || localPart,
 			type: "personal",
+			useAllDomains: false,
 		});
 	} catch {
 		return current;
 	}
 	try {
-		await ensureMailboxDomainRouting(env, db, { id, domainId: domain.id, localPart, useAllDomains: true });
+		await ensureMailboxDomainRouting(env, db, { id, domainId: domain.id, localPart, useAllDomains: false });
 	} catch {
 		// Mailbox visibility should not depend on routing API availability.
 	}

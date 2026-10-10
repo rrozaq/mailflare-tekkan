@@ -85,7 +85,7 @@ export const mailboxes = sqliteTable(
 		autoReplyBody: text("auto_reply_body").notNull().default(""),
 		avatarKey: text("avatar_key"),
 		type: text("type", { enum: ["personal", "shared"] }).notNull().default("personal"),
-		useAllDomains: integer("use_all_domains", { mode: "boolean" }).notNull().default(true),
+		useAllDomains: integer("use_all_domains", { mode: "boolean" }).notNull().default(false),
 		disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
 		createdAt: integer("created_at", { mode: "timestamp" })
 			.notNull()

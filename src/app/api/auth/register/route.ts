@@ -87,8 +87,9 @@ export async function POST(request: Request) {
 			domainId: domain.id,
 			localPart: username,
 			displayName: username,
+			useAllDomains: false,
 		});
-		await ensureMailboxDomainRouting(env, db, { id: mailboxId, domainId: domain.id, localPart: username, useAllDomains: true });
+		await ensureMailboxDomainRouting(env, db, { id: mailboxId, domainId: domain.id, localPart: username, useAllDomains: false });
 	} catch (err) {
 		if (changes) await rollbackDomainProvisioning(env, changes);
 		try {

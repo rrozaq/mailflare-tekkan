@@ -44,9 +44,9 @@ export async function POST(request: Request) {
 	const [alias] = await db.select({ id: mailboxAliases.id }).from(mailboxAliases).where(and(eq(mailboxAliases.domainId, domain.id), eq(mailboxAliases.localPart, localPart))).limit(1);
 	if (alias) return NextResponse.json({ error: "An alias already uses this address" }, { status: 409 });
 	const id = newId("mbx");
-	await db.insert(mailboxes).values({ id, userId: ownerUserId, domainId: domain.id, localPart, displayName: parsed.data.displayName, type: mailboxType });
+	await db.insert(mailboxes).values({ id, userId: ownerUserId, domainId: domain.id, localPart, displayName: parsed.data.displayName, type: mailboxType, useAllDomains: false });
 	try {
-		await ensureMailboxDomainRouting(env, db, { id, domainId: domain.id, localPart, useAllDomains: true });
+		await ensureMailboxDomainRouting(env, db, { id, domainId: domain.id, localPart, useAllDomains: false });
 	} catch (error) {
 		await db.delete(mailboxes).where(eq(mailboxes.id, id));
 		return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create Cloudflare routing rule" }, { status: 502 });

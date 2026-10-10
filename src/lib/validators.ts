@@ -163,7 +163,7 @@ export const createUserAccountSchema = z.object({
 	password: z.string().min(8).max(128),
 	role: z.enum(["admin", "user"]).default("user"),
 	// Existing API/MCP clients retain the previous behavior when this is omitted.
-	useAllDomains: z.boolean().default(true),
+	useAllDomains: z.boolean().default(false),
 	aliases: z.array(createMailboxAliasSchema).default([]),
 });
 
