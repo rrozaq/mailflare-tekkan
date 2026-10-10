@@ -12,6 +12,7 @@ import {
   FileText,
   Folder,
   Inbox,
+	Mail,
   MailPlus,
   Plus,
   Send,
@@ -20,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -95,6 +97,7 @@ function NavToggle({ expanded, onClick, collapsedLabel, expandedLabel }: { expan
 
 export function DashboardNav({ className }: { className?: string }) {
   const { t } = useLanguage();
+	const currentUser = useCurrentUser();
   const { minimal } = useSidebar();
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -169,6 +172,9 @@ export function DashboardNav({ className }: { className?: string }) {
 
   const isActiveHref = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const composeLink = linksWithCounts.find((link) => link.href === "/compose");
+	const mailboxManagementLink: NavLink | null = currentUser?.role === "user" && currentUser.canManageMailboxes
+		? { href: "/mailboxes", label: t("admin.nav.mailboxes"), icon: Mail }
+		: null;
   const mainLinks = linksWithCounts.filter((link) => link.href !== "/compose" && !MORE_LINK_HREFS.includes(link.href!));
   const moreLinks = linksWithCounts.filter((link) => MORE_LINK_HREFS.includes(link.href!));
   // The icon rail has no room for text toggles. When collapsed, the page you are on stays listed on its own.
@@ -230,6 +236,7 @@ export function DashboardNav({ className }: { className?: string }) {
   return (
     <SidebarScaffold className={className} header={<SidebarHeader href="/inbox" />} footer={<SidebarFooter />}>
       {composeLink && <NavItem labelClassName="font-medium" link={composeLink} />}
+		{mailboxManagementLink && <NavItem link={mailboxManagementLink} />}
       {minimal && <hr className="mx-6 my-2 border-neutral-200/70" />}
       <ReorderableList
         storageKey="mailflare:nav:layout"
