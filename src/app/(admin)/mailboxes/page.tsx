@@ -4,7 +4,7 @@ import { mobilePrimaryActionClass } from "@/components/page-header-utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, UsersRound } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,15 @@ export default function MailboxesPage() {
 			return (await res.json()) as { domains: Domain[] };
 		},
 	});
+
+	const availableDomains = useMemo(() => {
+		const allDomains = domains.data?.domains ?? [];
+		if (account.data?.user?.role !== "user") return allDomains;
+
+		const emailDomain = account.data.user.email?.split("@").at(-1)?.toLowerCase();
+		if (!emailDomain) return [];
+		return allDomains.filter((domain) => domain.hostname.toLowerCase() === emailDomain);
+	}, [account.data?.user?.email, account.data?.user?.role, domains.data?.domains]);
 
 	const mailboxes = useQuery({
 		queryKey: ["mailboxes"],
@@ -204,7 +213,7 @@ export default function MailboxesPage() {
 										onChange={(event) => setDomainId(event.target.value)}
 									>
 										<option value="">{t("accounts.selectDomain")}</option>
-										{(domains.data?.domains ?? []).map((domain) => (
+										{availableDomains.map((domain) => (
 											<option key={domain.id} value={domain.id}>
 												{domain.hostname}
 											</option>

@@ -62,9 +62,16 @@ export async function POST(request: Request) {
 		.from(domains)
 		.where(eq(domains.id, parsed.data.domainId))
 		.limit(1);
+	const emailDomain = user.email.split("@").at(-1)?.toLowerCase();
+	const isUserDomain = domain?.hostname.toLowerCase() === emailDomain;
 	const canUseDomain = domain && (
-		domain.userId === user.id ||
-		(user.canManageMailboxes && !!user.createdByUserId && domain.userId === user.createdByUserId)
+		user.role === "user"
+			? isUserDomain && (
+				domain.userId === user.id ||
+				(user.canManageMailboxes && !!user.createdByUserId && domain.userId === user.createdByUserId)
+			)
+			: domain.userId === user.id ||
+				(user.canManageMailboxes && !!user.createdByUserId && domain.userId === user.createdByUserId)
 	);
 	if (!canUseDomain) {
 		return NextResponse.json({ error: "Domain not found" }, { status: 404 });

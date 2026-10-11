@@ -20,6 +20,7 @@ export type CurrentAccountResponse = {
 		id?: string;
 		email?: string;
 		name?: string | null;
+		role?: "admin" | "user";
 	};
 };
 
