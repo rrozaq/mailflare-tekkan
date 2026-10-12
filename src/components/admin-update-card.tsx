@@ -87,6 +87,42 @@ export function AdminUpdateCard() {
 		}
 	}
 
+	// Migrations run through the Worker's D1 binding, so they never wait on the GitHub update settings.
+	const migrationRows = (
+		<>
+			{isCheckingMigrations && (
+				<div className="flex items-center gap-3 px-4 py-4">
+					<Skeleton className="h-4 w-4 rounded-full" />
+					<Skeleton className="h-4 w-44" />
+				</div>
+			)}
+
+			{!isCheckingMigrations && !!migrationStatus?.pending.length && !migrationStatus.unknown.length && (
+				<div className="flex items-center gap-3 px-4 py-4">
+					<Database className={`h-4 w-4 shrink-0 text-amber-600 ${isMigrating ? "animate-pulse" : ""}`} />
+					<p className="text-sm text-neutral-700">
+						{t("update.pendingMigrations", { count: migrationStatus.pending.length })}
+					</p>
+					<button
+						type="button"
+						onClick={handleMigrate}
+						disabled={isMigrating}
+						className="ml-auto shrink-0 text-sm font-medium text-blue-700 hover:underline disabled:pointer-events-none disabled:opacity-50"
+					>
+						{isMigrating ? t("update.updatingDatabase") : t("update.updateDatabase")}
+					</button>
+				</div>
+			)}
+
+			{!isCheckingMigrations && !!migrationStatus?.unknown.length && (
+				<div className="flex items-center gap-3 px-4 py-4 text-sm text-red-600">
+					<CircleX className="h-4 w-4 shrink-0" />
+					{t("update.deployMatching")}
+				</div>
+			)}
+		</>
+	);
+
 	return (
 		<Card className="rounded-3xl border-0 bg-white p-6">
 			<CardHeader className="flex-row items-center gap-4 space-y-0 py-0">
@@ -124,6 +160,12 @@ export function AdminUpdateCard() {
 					</div>
 				)}
 
+				{!isChecking && !status?.configured && (
+					<div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100 empty:hidden">
+						{migrationRows}
+					</div>
+				)}
+
 				{!isChecking && status?.configured && (
 					<div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100">
 						<div className="flex items-center gap-3 px-4 py-4">
@@ -149,36 +191,7 @@ export function AdminUpdateCard() {
 							)}
 						</div>
 
-						{isCheckingMigrations && (
-							<div className="flex items-center gap-3 px-4 py-4">
-								<Skeleton className="h-4 w-4 rounded-full" />
-								<Skeleton className="h-4 w-44" />
-							</div>
-						)}
-
-						{!isCheckingMigrations && !!migrationStatus?.pending.length && !migrationStatus.unknown.length && (
-							<div className="flex items-center gap-3 px-4 py-4">
-								<Database className={`h-4 w-4 shrink-0 text-amber-600 ${isMigrating ? "animate-pulse" : ""}`} />
-								<p className="text-sm text-neutral-700">
-									{t("update.pendingMigrations", { count: migrationStatus.pending.length })}
-								</p>
-								<button
-									type="button"
-									onClick={handleMigrate}
-									disabled={isMigrating}
-									className="ml-auto shrink-0 text-sm font-medium text-blue-700 hover:underline disabled:pointer-events-none disabled:opacity-50"
-								>
-									{isMigrating ? t("update.updatingDatabase") : t("update.updateDatabase")}
-								</button>
-							</div>
-						)}
-
-						{!isCheckingMigrations && !!migrationStatus?.unknown.length && (
-							<div className="flex items-center gap-3 px-4 py-4 text-sm text-red-600">
-								<CircleX className="h-4 w-4 shrink-0" />
-								{t("update.deployMatching")}
-							</div>
-						)}
+						{migrationRows}
 					</div>
 				)}
 
