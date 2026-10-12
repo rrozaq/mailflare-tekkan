@@ -1,5 +1,4 @@
 import type { TranslationKey } from "@/lib/i18n/types";
-import type { LucideIcon } from "lucide-react";
 import type { ButtonProps } from "@/components/ui/button";
 import type { MailboxSelectorUser } from "@/components/mailbox-selector-types";
 import type { ReactNode } from "react";
@@ -27,19 +26,12 @@ export type LandingNavItem = {
 	label: string;
 };
 
-export type SidebarItem = {
-	labelKey: TranslationKey;
-	icon: LucideIcon;
-	active?: boolean;
-	count?: string;
-};
-
 export type MailPreview = {
-	icon: LucideIcon;
 	sender: string;
 	subjectKey: TranslationKey;
 	previewKey: TranslationKey;
-	badgeKey: TranslationKey;
+	time: string;
+	unread?: boolean;
 };
 
 export type LandingStat = {
