@@ -12,8 +12,8 @@ import { ensureMailboxDomainRouting } from "@/lib/mailboxes/domain-addresses";
 import type { CreateUserAccountInput } from "./types";
 import { accountListItemFromUser, getDomainForAdmin } from "./utils";
 
-/** Shared by dashboard and admin API/MCP account creation. */
-export async function createAccountResponse(env: CloudflareEnv, adminUserId: string, input: CreateUserAccountInput) {
+/** Shared by dashboard and admin API/MCP account creation. `addedByUserId` is set when a user granted can_add_accounts adds it. */
+export async function createAccountResponse(env: CloudflareEnv, adminUserId: string, input: CreateUserAccountInput, addedByUserId: string | null = null) {
 	const db = getDb(env);
 	const primaryDomain = await getDomainForAdmin(db, adminUserId, input.domainId);
 	if (!primaryDomain) return NextResponse.json({ error: "Domain not found" }, { status: 404 });
@@ -56,7 +56,7 @@ export async function createAccountResponse(env: CloudflareEnv, adminUserId: str
 	try {
 		const accountInsert = db.insert(users).values({
 			id: userId, email, passwordHash: hashPassword(input.password), name: username,
-			role: input.role, createdByUserId: adminUserId,
+			role: input.role, createdByUserId: adminUserId, addedByUserId,
 		}).returning();
 		const mailboxInsert = db.insert(mailboxes).values(mailbox);
 		// Five bound columns per alias: 20 rows fit D1's 100-parameter limit.

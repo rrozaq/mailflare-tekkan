@@ -42,12 +42,14 @@ export default function DashboardLayout({
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 	const allowMailboxManagers = pathname === "/mailboxes" || pathname.startsWith("/mailboxes/");
+	// Users granted account adding reach the list and the details and password of accounts they added.
+	const allowAccountAdders = pathname === "/accounts" || /^\/accounts\/[^/]+(\/password)?$/.test(pathname);
 
   const mobileTitleKey = adminPageTitles[pathname];
   const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
 
   return (
-    <AuthGuard requireMailbox requireRole="admin" allowMailboxManagers={allowMailboxManagers} requirePrimary={requirePrimary}>
+    <AuthGuard requireMailbox requireRole="admin" allowMailboxManagers={allowMailboxManagers} allowAccountAdders={allowAccountAdders} requirePrimary={requirePrimary}>
       <SidebarProvider expandedWidth={256} mobileOverlay>
       <MailboxProvider>
         <ComposeProvider>

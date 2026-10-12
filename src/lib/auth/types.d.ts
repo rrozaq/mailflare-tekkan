@@ -14,10 +14,12 @@ export type SessionUser = {
 	canManageMailboxes: boolean;
 	canManageDomains: boolean;
 	canManageUsers: boolean;
+	canAddAccounts: boolean;
 	keyboardShortcutsEnabled: boolean;
 	spamProtectionEnabled: boolean;
 	trashRetentionDays: number | null;
 	showFullRecipientAddresses: boolean;
 	createdByUserId: string | null;
+	addedByUserId: string | null;
 	createdAt: Date;
 };

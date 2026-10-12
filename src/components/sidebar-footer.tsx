@@ -29,17 +29,6 @@ export function SidebarFooter() {
           </kbd>
         </button>
       )}
-      <p className="px-1 text-[11px] text-neutral-400">
-        {t("navigation.poweredBy")}{" "}
-        <a
-          href={`https://mailflare.co/?ref=${typeof window !== "undefined" ? location.hostname : ""}&v=${packageJson.version}`}
-          target="_blank"
-          className="hover:underline text-neutral-500"
-          rel="noreferrer"
-        >
-          Mailflare v{packageJson.version}
-        </a>
-      </p>
     </div>
   );
 }

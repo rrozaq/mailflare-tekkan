@@ -80,7 +80,8 @@ export default function AccountPermissionsPage() {
 		}
 	}
 
-	const editable = !!account?.editable;
+	// Users who added an account may edit it, but only admins hand out permissions.
+	const editable = !!account?.editable && currentUser?.role === "admin";
 
 	return (
 		<div className="space-y-6">
@@ -133,6 +134,20 @@ export default function AccountPermissionsPage() {
 									checked={account?.canManageMailboxes ?? false}
 									disabled={!account || !editable}
 									onChange={(event) => account && setAccount({ ...account, canManageMailboxes: event.target.checked })}
+								/>
+							</td>
+						</tr>
+						<tr>
+							<td className="px-5 py-4">
+								<p className="text-sm font-semibold text-neutral-900">{t("account.permissions.addAccounts")}</p>
+								<p className="mt-1 text-xs text-neutral-500">{t("account.permissions.addAccountsHint")}</p>
+							</td>
+							<td className="px-5 py-4 text-center">
+								<Checkbox
+									aria-label={t("account.permissions.allowAddAccounts")}
+									checked={account?.canAddAccounts ?? false}
+									disabled={!account || !editable || account.role !== "user"}
+									onChange={(event) => account && setAccount({ ...account, canAddAccounts: event.target.checked })}
 								/>
 							</td>
 						</tr>

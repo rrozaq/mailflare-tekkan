@@ -15,7 +15,7 @@ import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
 import { getAvatarColorStyle } from "@/lib/avatar-colors";
 import { LicenseRequiredOverlay } from "@/components/license-required-overlay";
 import { List, ListRow } from "@/components/ui/list";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { fetchCurrentUser, useCurrentUser } from "@/hooks/use-current-user";
 import { defaultTranslator } from "@/lib/i18n/utils";
 import { AccountAliases } from "./account-aliases";
 import type { Account, AccountAliasDraft, AccountResponse, Domain } from "./types";
@@ -32,6 +32,8 @@ export default function AccountsPage() {
 	const currentUser = useCurrentUser();
 	const canManage = !!currentUser && (currentUser.isPrimaryAdmin || currentUser.canManageUsers);
 	const canChooseRole = !!currentUser?.isPrimaryAdmin;
+	// Users granted account adding create plain users on their own email domain only.
+	const isAccountAdder = currentUser?.role === "user";
 	const [accounts, setAccounts] = useState<Account[]>([]);
 	const [domains, setDomains] = useState<Domain[]>([]);
 	const [username, setUsername] = useState("");
@@ -56,8 +58,13 @@ export default function AccountsPage() {
 			const response = await authFetch("/api/domains");
 			const data = (await response.json()) as { domains?: Domain[]; error?: string };
 			if (!response.ok) throw new Error(data.error ?? t("accounts.domainsFailed"));
-			setDomains(data.domains ?? []);
-			setDomainId(data.domains?.[0]?.id ?? "");
+			const user = await fetchCurrentUser();
+			const emailDomain = user?.email.split("@").at(-1)?.toLowerCase();
+			const available = user?.role === "user"
+				? (data.domains ?? []).filter((domain) => domain.hostname.toLowerCase() === emailDomain)
+				: data.domains ?? [];
+			setDomains(available);
+			setDomainId(available[0]?.id ?? "");
 		}).catch((error) => {
 			const text = error instanceof Error ? error.message : t("accounts.loadFailed");
 			setTeamRequired(/team license/i.test(text));
@@ -225,6 +232,7 @@ export default function AccountsPage() {
 					/>
 					</div>
 
+					{!isAccountAdder && (
 					<div className="space-y-2">
 					<Label htmlFor="account-role">{t("accounts.role")}</Label>
 					<Select
@@ -240,7 +248,9 @@ export default function AccountsPage() {
 						<option value="admin">{t("accounts.roleAdmin")}</option>
 					</Select>
 					</div>
+					)}
 
+					{!isAccountAdder && (
 					<AccountAliases
 					domains={domains}
 					domainId={domainId}
@@ -250,6 +260,7 @@ export default function AccountsPage() {
 					aliases={aliases}
 					onAliasesChange={setAliases}
 					/>
+					)}
 
 					{message && (
 					<p className="text-sm text-red-600">{message}</p>

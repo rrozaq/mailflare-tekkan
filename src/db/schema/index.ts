@@ -21,6 +21,8 @@ export const users = sqliteTable("users", {
 	// Capabilities the primary admin grants to other admins.
 	canManageDomains: integer("can_manage_domains", { mode: "boolean" }).notNull().default(false),
 	canManageUsers: integer("can_manage_users", { mode: "boolean" }).notNull().default(false),
+	// Lets a plain user add accounts on their own email domain and manage the ones they added.
+	canAddAccounts: integer("can_add_accounts", { mode: "boolean" }).notNull().default(false),
 	keyboardShortcutsEnabled: integer("keyboard_shortcuts_enabled", { mode: "boolean" }).notNull().default(true),
 	spamProtectionEnabled: integer("spam_protection_enabled", { mode: "boolean" }).notNull().default(true),
 	/** Days a message may stay in Trash or Spam before the scheduled purge deletes it; null keeps it forever. */
@@ -33,6 +35,8 @@ export const users = sqliteTable("users", {
 	totpEnabled: integer("totp_enabled", { mode: "boolean" }).notNull().default(false),
 	totpConfirmedAt: integer("totp_confirmed_at", { mode: "timestamp" }),
 	createdByUserId: text("created_by_user_id").references((): AnySQLiteColumn => users.id, { onDelete: "set null" }),
+	// The user who added this account through can_add_accounts; createdByUserId stays the domain-owning admin.
+	addedByUserId: text("added_by_user_id").references((): AnySQLiteColumn => users.id, { onDelete: "set null" }),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.notNull()
 		.$defaultFn(() => new Date()),

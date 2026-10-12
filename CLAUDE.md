@@ -120,6 +120,12 @@ Two independent auth surfaces:
 
 Mailbox authorization is separate from user role and goes through `src/lib/mailboxes/access.ts` (`getMailboxAccessLevel`, `listAccessibleMailboxes`, `listAccessibleMailboxIds`), which accounts for ownership, the `mailbox_access` sharing table, and admin role. Message queries scope by accessible mailbox IDs, not by `userId` — see `src/app/api/messages/route.ts` for the canonical pattern.
 
+Mailbox management can be delegated to a non-admin: `users.can_manage_mailboxes` lets a `user` into the admin-only `/mailboxes` pages (`AuthGuard`'s `allowMailboxManagers`, set by `src/app/(admin)/layout.tsx` for those paths only) and adds a Mailboxes link to `DashboardNav`. Such a user may create mailboxes only on the domain of their own login email, owned by themselves or by the admin in `createdByUserId`. `POST /api/mailboxes` enforces this; the page's domain filter is cosmetic. Admins are not restricted to their email domain.
+
+Account adding is delegated the same way: `users.can_add_accounts` (migration 0055, granted on the Permissions page by admins who can manage users) lets a `user` add plain `user` accounts, without aliases or `useAllDomains`, on their own email domain. The new account's `createdByUserId` is the domain-owning admin, so the delegation helpers above keep working for it; `added_by_user_id` records the adder. `requireAccountManager` and `managesAddedAccount` in `src/app/api/accounts/utils.ts` scope the list, detail, PATCH and avatar routes to the accounts the adder added. Adders may change their name, password, enabled state and forwarding, but never permissions or role. The UI gives them only Details and Password (`getAccountSettingsNavItems`); `tests/account-adders.test.mjs` covers the rules.
+
+`mailboxes.use_all_domains` now defaults to `false` in the schema, validators and every insert path, so a new mailbox receives only on its own domain. The D1 column still has `DEFAULT true` from migration 0018 (no migration changed it), so always set the value explicitly in raw SQL.
+
 ### Folders are mostly virtual
 
 `messages.status` is a free-text column driving the folder views: `received` (inbox), `sent`, `draft`, `spam`, `trash`, `archived`. Orthogonal to that are `starred`, `snoozedUntil`, and `folderId` (user-created folders in the `folders` table). A "folder" route under `src/app/(dashboard)/` is usually a status filter, not a table.

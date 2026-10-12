@@ -9,6 +9,8 @@ export type AuthGuardProps = {
 	requireRole?: "admin";
 	/** Allow users delegated mailbox management into an otherwise admin-only route. */
 	allowMailboxManagers?: boolean;
+	/** Allow users granted account adding into an otherwise admin-only route. */
+	allowAccountAdders?: boolean;
 	requirePrimary?: boolean;
 	/** Public page that stays usable while signed in (adding another account). */
 	allowAuthenticated?: boolean;

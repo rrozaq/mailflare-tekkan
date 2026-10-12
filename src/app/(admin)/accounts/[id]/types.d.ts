@@ -8,6 +8,7 @@ export type ManagedAccount = {
 	canManageMailboxes: boolean;
 	canManageDomains: boolean;
 	canManageUsers: boolean;
+	canAddAccounts: boolean;
 	forwardingEmail: string | null;
 	canForwardEmail: boolean;
 	hasAvatar: boolean;

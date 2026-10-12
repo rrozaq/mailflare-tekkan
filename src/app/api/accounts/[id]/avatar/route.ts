@@ -6,15 +6,16 @@ import { getAvatarImageResponse, getOptimizedAvatarFiles, storeAvatarImages } fr
 import { avatarKeyFor } from "@/app/api/profile/avatar/utils";
 import type { AccountRouteParams } from "../types";
 import { getManagedAccount } from "./utils";
-import { requireTeamAdmin } from "../../utils";
+import { managesAddedAccount, requireAccountManager } from "../../utils";
 import { selectAccountById } from "../utils";
 
 export async function GET(request: Request, { params }: AccountRouteParams) {
 	const { id } = await params;
-	const access = await requireTeamAdmin(request);
+	const access = await requireAccountManager(request);
 	if (access.error) return access.error;
 	const account = await selectAccountById(getDb(access.env), id);
 	if (!account?.avatarKey) return new Response("Not found", { status: 404 });
+	if (access.user!.role !== "admin" && !managesAddedAccount(access.user!, account)) return new Response("Not found", { status: 404 });
 	return getAvatarImageResponse(request, access.env.BUCKET, account.avatarKey);
 }
 

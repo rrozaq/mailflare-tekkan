@@ -19,6 +19,7 @@ import {
   ShieldAlert,
   Star,
   Trash2,
+	Users,
 } from "lucide-react";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -175,6 +176,9 @@ export function DashboardNav({ className }: { className?: string }) {
 	const mailboxManagementLink: NavLink | null = currentUser?.role === "user" && currentUser.canManageMailboxes
 		? { href: "/mailboxes", label: t("admin.nav.mailboxes"), icon: Mail }
 		: null;
+	const accountAddingLink: NavLink | null = currentUser?.role === "user" && currentUser.canAddAccounts
+		? { href: "/accounts", label: t("admin.nav.accounts"), icon: Users }
+		: null;
   const mainLinks = linksWithCounts.filter((link) => link.href !== "/compose" && !MORE_LINK_HREFS.includes(link.href!));
   const moreLinks = linksWithCounts.filter((link) => MORE_LINK_HREFS.includes(link.href!));
   // The icon rail has no room for text toggles. When collapsed, the page you are on stays listed on its own.
@@ -237,6 +241,7 @@ export function DashboardNav({ className }: { className?: string }) {
     <SidebarScaffold className={className} header={<SidebarHeader href="/inbox" />} footer={<SidebarFooter />}>
       {composeLink && <NavItem labelClassName="font-medium" link={composeLink} />}
 		{mailboxManagementLink && <NavItem link={mailboxManagementLink} />}
+		{accountAddingLink && <NavItem link={accountAddingLink} />}
       {minimal && <hr className="mx-6 my-2 border-neutral-200/70" />}
       <ReorderableList
         storageKey="mailflare:nav:layout"

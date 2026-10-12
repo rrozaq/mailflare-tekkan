@@ -330,6 +330,13 @@
       "when": 1788850800018,
       "tag": "0054_add_push_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1788850800019,
+      "tag": "0055_add_account_adders",
+      "breakpoints": true
     }
   ]
 }

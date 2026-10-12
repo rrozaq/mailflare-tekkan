@@ -2,14 +2,15 @@ import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type { getDb } from "@/db";
 import { domains, mailboxes, users } from "@/db/schema";
-import { assertAdmin } from "@/lib/auth/admin";
+import { canAddAccounts, isAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
 import { getLicenseEntitlements } from "@/lib/licenses/service";
 import { getEnv } from "@/lib/cloudflare";
+import type { SessionUser } from "@/lib/auth/types";
 
 type Db = ReturnType<typeof getDb>;
 
-export function listAccountsForAdmin(db: Db) {
+export function listAccountsForAdmin(db: Db, addedByUserId?: string) {
 	return db
 		.select({
 			id: users.id,
@@ -26,6 +27,7 @@ export function listAccountsForAdmin(db: Db) {
 			createdAt: users.createdAt,
 		})
 		.from(users)
+		.where(addedByUserId ? eq(users.addedByUserId, addedByUserId) : undefined)
 		.orderBy(desc(users.createdAt));
 }
 
@@ -77,11 +79,28 @@ export function accountListItemFromUser(user: {
 	};
 }
 
-export async function requireTeamAdmin(request: Request) {
+export function requireTeamAdmin(request: Request) {
+	return requireAccountAccess(request, isAdmin);
+}
+
+/** Admins, or users granted can_add_accounts; callers limit the latter with managesAddedAccount. */
+export function requireAccountManager(request: Request) {
+	return requireAccountAccess(request, (user) => isAdmin(user) || canAddAccounts(user));
+}
+
+/** A user granted can_add_accounts manages only the plain user accounts they added. */
+export function managesAddedAccount(
+	actor: Pick<SessionUser, "id" | "role" | "canAddAccounts">,
+	account: { role: "admin" | "user"; isPrimaryAdmin: boolean; addedByUserId: string | null },
+) {
+	return canAddAccounts(actor) && account.addedByUserId === actor.id && account.role === "user" && !account.isPrimaryAdmin;
+}
+
+async function requireAccountAccess(request: Request, allowed: (user: SessionUser) => boolean) {
 	const env = getEnv();
 	try {
 		const user = await requireUser(env, request);
-		assertAdmin(user);
+		if (!allowed(user)) throw new Error("Forbidden");
 		if (!(await getLicenseEntitlements(env)).canManageAccounts) {
 			return {
 				env,

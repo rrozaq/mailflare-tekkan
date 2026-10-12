@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { cn } from "@/lib/utils";
 import { SectionNavSheet } from "../section-nav-sheet";
 import {
-	accountSettingsNavItems,
 	getAccountSettingsHref,
+	getAccountSettingsNavItems,
 	isActiveAccountSettingsPath,
 } from "./account-settings-nav-utils";
 
@@ -15,7 +16,8 @@ export function AccountSettingsNav() {
 	const { t } = useLanguage();
 	const { id } = useParams<{ id: string }>();
 	const pathname = usePathname();
-	const currentItem = accountSettingsNavItems.find((item) => isActiveAccountSettingsPath(pathname, getAccountSettingsHref(id, item.segment)));
+	const navItems = getAccountSettingsNavItems(useCurrentUser()?.role);
+	const currentItem = navItems.find((item) => isActiveAccountSettingsPath(pathname, getAccountSettingsHref(id, item.segment)));
 	const currentLabel = t(currentItem?.labelKey ?? "accountSettings.title");
 
 	return (
@@ -25,7 +27,7 @@ export function AccountSettingsNav() {
 					{t("accountSettings.title")}
 				</h2>
 				<nav className="space-y-1">
-					{accountSettingsNavItems.map((item) => {
+					{navItems.map((item) => {
 						const href = getAccountSettingsHref(id, item.segment);
 						return (
 							<Link

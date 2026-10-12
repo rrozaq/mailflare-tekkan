@@ -97,7 +97,7 @@ export function AdminNav({ className }: { className?: string }) {
 
   function canSee(link: AdminNavLink): boolean {
     if (!user) return false;
-	if (user.role !== "admin") return user.canManageMailboxes && link.href === "/mailboxes";
+	if (user.role !== "admin") return (user.canManageMailboxes && link.href === "/mailboxes") || (user.canAddAccounts && link.href === "/accounts");
 	if (!link.permission) return true;
     if (link.permission === "primary") return user.isPrimaryAdmin;
     if (link.permission === "domains") return user.isPrimaryAdmin || user.canManageDomains;
@@ -105,7 +105,7 @@ export function AdminNav({ className }: { className?: string }) {
   }
 
   return (
-    <SidebarScaffold className={className} header={<SidebarHeader href="/inbox" label={user?.role === "admin" ? t("account.admin") : t("admin.nav.mailboxes")} />} footer={<SidebarFooter />}>
+    <SidebarScaffold className={className} header={<SidebarHeader href="/inbox" label={user?.role === "admin" ? t("account.admin") : user?.canManageMailboxes ? t("admin.nav.mailboxes") : t("admin.nav.accounts")} />} footer={<SidebarFooter />}>
       <div className={cn("space-y-4", minimal && "space-y-2 pl-1")}>
         {sections.map((section, sectionIndex) => {
           const links = section.links.filter(canSee).map(({ labelKey, ...link }): NavLink => ({ ...link, label: t(labelKey) }));

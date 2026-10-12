@@ -41,3 +41,10 @@ export function canManageUsers(
 ): boolean {
 	return isPrimaryAdmin(user) || (user.role === "admin" && user.canManageUsers);
 }
+
+/** A plain user the admin let add accounts on their own email domain. */
+export function canAddAccounts(
+	user: Pick<SessionUser, "role" | "canAddAccounts">,
+): boolean {
+	return user.role === "user" && user.canAddAccounts;
+}

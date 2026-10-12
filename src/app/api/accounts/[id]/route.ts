@@ -3,22 +3,22 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { updateManagedAccountSchema } from "@/lib/validators";
-import { requireTeamAdmin } from "../utils";
+import { managesAddedAccount, requireAccountManager } from "../utils";
 import { getLicenseEntitlements } from "@/lib/licenses/service";
-import { canManageUsers, isPrimaryAdmin } from "@/lib/auth/admin";
+import { canManageUsers, isAdmin, isPrimaryAdmin } from "@/lib/auth/admin";
 import type { AccountRouteParams } from "./types";
 import { selectAccountById, updateAccountCredentials } from "./utils";
 import { deleteUserSessions } from "@/lib/auth/session";
 
 export async function GET(request: Request, { params }: AccountRouteParams) {
-	const access = await requireTeamAdmin(request);
+	const access = await requireAccountManager(request);
 	if (access.error) return access.error;
 	const { id } = await params;
 	const account = await selectAccountById(getDb(access.env), id);
-	if (!account) {
+	const actor = access.user!;
+	if (!account || (!isAdmin(actor) && !managesAddedAccount(actor, account))) {
 		return NextResponse.json({ error: "Account not found" }, { status: 404 });
 	}
-	const actor = access.user!;
 	return NextResponse.json({
 		account: {
 			id: account.id,
@@ -30,10 +30,11 @@ export async function GET(request: Request, { params }: AccountRouteParams) {
 			canManageMailboxes: account.canManageMailboxes,
 			canManageDomains: account.canManageDomains,
 			canManageUsers: account.canManageUsers,
+			canAddAccounts: account.canAddAccounts,
 			forwardingEmail: account.forwardingEmail,
 			canForwardEmail: (await getLicenseEntitlements(access.env)).canForwardEmail,
 			hasAvatar: !!account.avatarKey,
-			editable: isPrimaryAdmin(actor) || (canManageUsers(actor) && account.role === "user" && !account.isPrimaryAdmin),
+			editable: isPrimaryAdmin(actor) || (canManageUsers(actor) && account.role === "user" && !account.isPrimaryAdmin) || managesAddedAccount(actor, account),
 			canChangeRole: isPrimaryAdmin(actor),
 			canTransferPrimary: isPrimaryAdmin(actor) && !account.isPrimaryAdmin && !account.disabled,
 		},
@@ -41,7 +42,7 @@ export async function GET(request: Request, { params }: AccountRouteParams) {
 }
 
 export async function PATCH(request: Request, { params }: AccountRouteParams) {
-	const access = await requireTeamAdmin(request);
+	const access = await requireAccountManager(request);
 	if (access.error) return access.error;
 	const { id } = await params;
 	const db = getDb(access.env);
@@ -51,7 +52,7 @@ export async function PATCH(request: Request, { params }: AccountRouteParams) {
 	}
 	const actor = access.user!;
 	const actorIsPrimary = isPrimaryAdmin(actor);
-	if (!actorIsPrimary && !canManageUsers(actor)) {
+	if (!actorIsPrimary && !canManageUsers(actor) && !managesAddedAccount(actor, account)) {
 		return NextResponse.json({ error: "You do not have permission to manage users" }, { status: 403 });
 	}
 	// Admins without the primary role can only manage plain user accounts.
@@ -76,7 +77,9 @@ export async function PATCH(request: Request, { params }: AccountRouteParams) {
 	await db.update(users).set({
 		role,
 		disabled,
-		canManageMailboxes: parsed.data.canManageMailboxes,
+		// Only admins hand out permissions; a user who added the account may not.
+		...(isAdmin(actor) ? { canManageMailboxes: parsed.data.canManageMailboxes } : {}),
+		...(isAdmin(actor) && parsed.data.canAddAccounts !== undefined ? { canAddAccounts: parsed.data.canAddAccounts } : {}),
 		...(actorIsPrimary && parsed.data.canManageDomains !== undefined ? { canManageDomains: parsed.data.canManageDomains } : {}),
 		...(actorIsPrimary && parsed.data.canManageUsers !== undefined ? { canManageUsers: parsed.data.canManageUsers } : {}),
 		...(parsed.data.forwardingEmail !== undefined ? { forwardingEmail: parsed.data.forwardingEmail } : {}),

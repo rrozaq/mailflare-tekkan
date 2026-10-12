@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEnv } from "@/lib/cloudflare";
 import { requireUser } from "@/lib/auth/cookies";
-import { canManageDomains } from "@/lib/auth/admin";
+import { canAddAccounts, canManageDomains } from "@/lib/auth/admin";
 import { addDomainSchema } from "@/lib/validators";
 import { addDomainForUser, listUserDomains } from "@/lib/domains/service";
 import type { DnsStatusSummary } from "@/lib/dns-status";
@@ -12,7 +12,7 @@ import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
 export async function GET(request: NextRequest) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
-	const domainOwnerId = user.canManageMailboxes && user.createdByUserId ? user.createdByUserId : user.id;
+	const domainOwnerId = (user.canManageMailboxes || canAddAccounts(user)) && user.createdByUserId ? user.createdByUserId : user.id;
 	const domains = await listUserDomains(env, domainOwnerId);
 
 	const includeDns = request.nextUrl.searchParams.get("includeDns") === "true";
